@@ -1,34 +1,81 @@
 package com.acidsepp.loopi
 
+import android.annotation.SuppressLint
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.Slider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.DefaultAlpha
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import com.acidsepp.loopi.ui.theme.LoopiTheme
 
 class MainActivity : ComponentActivity() {
 
     private var mediaPlayer: MediaPlayer? = null
 
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             LoopiTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
+                    ImageWithBackground(
+                        painter = painterResource(id = R.drawable.background),
+                        backgroundDrawableResId = R.drawable.background,
+                        contentDescription = "",
+                        modifier = Modifier.fillMaxSize()
                     )
+                    var sliderValue by remember { mutableFloatStateOf(1f) }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        PlayButton(mediaPlayer!!)
+                        Slider(
+                            value = sliderValue,
+                            onValueChange = {
+                                sliderValue = it
+                                mediaPlayer!!.setVolume(it, it)
+                            },
+                            modifier = Modifier.fillMaxWidth(0.8f)
+                        )
+                    }
                 }
             }
         }
@@ -62,17 +109,74 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
+fun ImageWithBackground(
+    painter: Painter,
+    @DrawableRes backgroundDrawableResId: Int,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    alignment: Alignment = Alignment.Center,
+    contentScale: ContentScale = ContentScale.Crop,
+    alpha: Float = DefaultAlpha,
+    colorFilter: ColorFilter? = null
+) {
+    Box(
         modifier = modifier
-    )
+    ) {
+        Image(
+            painter = painterResource(backgroundDrawableResId),
+            contentDescription = null,
+            modifier = Modifier
+                .matchParentSize()
+        )
+        Image(
+            painter = painter,
+            contentDescription = contentDescription,
+            alignment = alignment,
+            contentScale = contentScale,
+            alpha = alpha,
+            colorFilter = colorFilter,
+            modifier = Modifier
+                .matchParentSize()
+        )
+    }
 }
 
-@Preview(showBackground = true)
+
 @Composable
-fun GreetingPreview() {
-    LoopiTheme {
-        Greeting("Android")
+fun PlayButton(mediaPlayer: MediaPlayer) {
+    var isPlaying by remember { mutableStateOf(mediaPlayer.isPlaying) }
+
+
+    // Update the state whenever the MediaPlayer starts/stops
+    DisposableEffect(mediaPlayer) {
+        val listener = MediaPlayer.OnCompletionListener {
+            isPlaying = false
+        }
+        mediaPlayer.setOnCompletionListener(listener)
+
+        onDispose {
+            mediaPlayer.setOnCompletionListener(null)
+        }
+    }
+
+    // Main button logic
+    Box(
+        modifier = Modifier.fillMaxWidth(0.8f).height(200.dp)
+            .clickable {
+                if (mediaPlayer.isPlaying) {
+                    mediaPlayer.pause()
+                    isPlaying = false
+                } else {
+                    mediaPlayer.start()
+                    isPlaying = true
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = if (isPlaying) Icons.Filled.Clear else Icons.Filled.PlayArrow,
+            contentDescription = if (isPlaying) "Stop" else "Play",
+            modifier = Modifier.fillMaxSize().alpha(0.8f)
+        )
     }
 }
