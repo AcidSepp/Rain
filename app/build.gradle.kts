@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.acidsepp.loopi"
+    namespace = "com.acidsepp.rain"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.acidsepp.loopi"
+        applicationId = "com.acidsepp.rain"
         minSdk = 34
         targetSdk = 34
         versionCode = 1

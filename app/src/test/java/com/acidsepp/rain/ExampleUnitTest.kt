@@ -1,4 +1,4 @@
-package com.acidsepp.loopi
+package com.acidsepp.rain
 
 import org.junit.Test
 

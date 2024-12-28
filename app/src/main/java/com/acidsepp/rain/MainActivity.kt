@@ -1,4 +1,4 @@
-package com.acidsepp.loopi
+package com.acidsepp.rain
 
 import android.annotation.SuppressLint
 import android.media.AudioAttributes
@@ -39,7 +39,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.acidsepp.loopi.ui.theme.LoopiTheme
+import com.acidsepp.rain.ui.theme.RainTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            LoopiTheme {
+            RainTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
                     ImageWithBackground(
                         painter = painterResource(id = R.drawable.background),
@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                                 sliderValue = it
                                 mediaPlayer!!.setVolume(it, it)
                             },
-                            modifier = Modifier.fillMaxWidth(0.8f)
+                            modifier = Modifier.fillMaxWidth(0.8f).alpha(0.8f)
                         )
                     }
                 }
