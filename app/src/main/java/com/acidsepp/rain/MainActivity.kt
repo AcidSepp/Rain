@@ -39,15 +39,32 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.lifecycleScope
 import com.acidsepp.rain.ui.theme.RainTheme
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
 
     private var mediaPlayer: MediaPlayer? = null
+    private val dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+    private val volumePreferenceKey = floatPreferencesKey("volume")
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val volumePreference = runBlocking {
+            dataStore.data.map { preferences -> preferences[volumePreferenceKey] ?: 1.0f }.firstOrNull()
+        } ?: 1.0f
+
         enableEdgeToEdge()
         setContent {
             RainTheme {
@@ -58,7 +75,7 @@ class MainActivity : ComponentActivity() {
                         contentDescription = "",
                         modifier = Modifier.fillMaxSize()
                     )
-                    var sliderValue by remember { mutableFloatStateOf(1f) }
+                    var sliderValue by remember { mutableFloatStateOf(volumePreference) }
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -72,8 +89,15 @@ class MainActivity : ComponentActivity() {
                             onValueChange = {
                                 sliderValue = it
                                 mediaPlayer!!.setVolume(it, it)
+                                lifecycleScope.launch {
+                                    dataStore.edit { settings ->
+                                        settings[volumePreferenceKey] = it
+                                    }
+                                }
                             },
-                            modifier = Modifier.fillMaxWidth(0.8f).alpha(0.8f)
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .alpha(0.8f)
                         )
                     }
                 }
@@ -91,7 +115,7 @@ class MainActivity : ComponentActivity() {
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
             )
-
+            setVolume(volumePreference, volumePreference)
             start()
         }
     }
@@ -107,6 +131,7 @@ class MainActivity : ComponentActivity() {
         mediaPlayer = null
     }
 }
+
 
 @Composable
 fun ImageWithBackground(
@@ -161,7 +186,9 @@ fun PlayButton(mediaPlayer: MediaPlayer) {
 
     // Main button logic
     Box(
-        modifier = Modifier.fillMaxWidth(0.8f).height(200.dp)
+        modifier = Modifier
+            .fillMaxWidth(0.8f)
+            .height(200.dp)
             .clickable {
                 if (mediaPlayer.isPlaying) {
                     mediaPlayer.pause()
@@ -176,7 +203,9 @@ fun PlayButton(mediaPlayer: MediaPlayer) {
         Icon(
             imageVector = if (isPlaying) Icons.Filled.Clear else Icons.Filled.PlayArrow,
             contentDescription = if (isPlaying) "Stop" else "Play",
-            modifier = Modifier.fillMaxSize().alpha(0.8f)
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(0.8f)
         )
     }
 }
