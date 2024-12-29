@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,35 +27,22 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
 import com.acidsepp.rain.ui.components.Background
 import com.acidsepp.rain.ui.components.PlayButton
 import com.acidsepp.rain.ui.theme.RainTheme
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.time.Duration
-import java.util.concurrent.atomic.AtomicBoolean
-
-val rainLength: Duration = Duration.ofSeconds(16)
-val crossfadeLength: Duration = Duration.ofSeconds(1)
-val loopLength = rainLength.minus(crossfadeLength)
 
 class MainActivity : ComponentActivity() {
 
-    private var playerBCoroutineScope: Job? = null
-    private var playerACoroutineScope: Job? = null
-
-    private var mediaPlayerA: MediaPlayer? = null
-    private var mediaPlayerB: MediaPlayer? = null
+    private lateinit var mediaPlayerA: MediaPlayer
+    private lateinit var mediaPlayerB: MediaPlayer
 
     private val dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
     private val volumePreferenceKey = floatPreferencesKey("volume")
-    private val stopped = AtomicBoolean(true)
 
     private var volume = 1.0f
 
@@ -82,21 +68,14 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        PlayButton(
-                            {
-                                startLooping(lifecycleScope)
-                            },
-                            {
-                                stopLooping()
-                            }
-                        )
+                        PlayButton(::startLooping, ::stopLooping)
                         Slider(
                             value = sliderValue,
                             onValueChange = {
                                 volume = it
                                 sliderValue = it
-                                mediaPlayerA?.setVolume(it, it)
-                                mediaPlayerB?.setVolume(it, it)
+                                mediaPlayerA.setVolume(it, it)
+                                mediaPlayerB.setVolume(it, it)
                                 lifecycleScope.launch {
                                     dataStore.edit { settings ->
                                         settings[volumePreferenceKey] = it
@@ -112,101 +91,52 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        startLooping(lifecycleScope)
+        mediaPlayerA = MediaPlayer.create(this, R.raw.raina).apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            setVolume(volume, volume)
+            isLooping = true
+        }
+        mediaPlayerB = MediaPlayer.create(this, R.raw.rainb).apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            setVolume(volume, volume)
+            isLooping = true
+        }
+
+        startLooping()
     }
 
     @Synchronized
-    private fun startLooping(lifecycleScope: LifecycleCoroutineScope) {
-        if (!stopped.get()) {
-            return
-        }
-        stopped.set(false)
-
-        mediaPlayerA = MediaPlayer.create(this, R.raw.rain).apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-            setVolume(volume, volume)
-        }
-
-        mediaPlayerB = MediaPlayer.create(this, R.raw.rain).apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-            setVolume(volume, volume)
-        }
-
-        playerACoroutineScope?.cancel()
-        playerBCoroutineScope?.cancel()
-
-        playerACoroutineScope = lifecycleScope.launch {
-            while (!stopped.get()) {
-                mediaPlayerA!!.restart()
-                Log.i("", "Media Player A started")
-                delay(loopLength.toMillis() * 2)
-            }
-        }
-
-        playerBCoroutineScope = lifecycleScope.launch {
-            while (!stopped.get()) {
-                delay(loopLength.toMillis())
-                mediaPlayerB!!.restart()
-                Log.i("", "Media Player B started")
-                delay(loopLength.toMillis())
-            }
-        }
+    private fun startLooping() {
+        mediaPlayerA.start()
+        mediaPlayerB.start()
     }
 
     @Synchronized
     private fun stopLooping() {
-        if (stopped.get()) {
-            return
-        }
-        stopped.set(true)
-        mediaPlayerA?.apply {
-            forceStop()
-            release()
-        }
-
-        mediaPlayerA?.apply {
-            forceStop()
-            release()
-        }
-        playerACoroutineScope?.cancel()
-        playerBCoroutineScope?.cancel()
-        mediaPlayerA = null
-        mediaPlayerB = null
-        playerACoroutineScope = null
-        playerBCoroutineScope = null
+        mediaPlayerA.pause()
+        mediaPlayerB.pause()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        stopLooping()
+        mediaPlayerA.apply {
+            stop()
+            release()
+        }
+
+        mediaPlayerA.apply {
+            stop()
+            release()
+        }
     }
-}
-
-/**
- * Resets the MediaPlayer to 0ms and starts it.
- */
-fun MediaPlayer.restart() = try {
-    this.seekTo(0)
-    this.start()
-} catch (e: Exception) {
-    Log.i("", "Could not restart MediaPlayer.", e)
-}
-
-/**
- * Calls stop on the MediaPlayer, catches potential errors as the MediaPlayer could be in an
- * unstoppable state, which is irrelevant as the MediaPlayer will be thrown away anyways.
- */
-fun MediaPlayer.forceStop() = try {
-    this.stop()
-} catch (ignored: Exception) {
 }
