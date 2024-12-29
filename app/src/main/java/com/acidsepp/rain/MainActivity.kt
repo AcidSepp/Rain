@@ -8,31 +8,20 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -43,7 +32,6 @@ import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
 import com.acidsepp.rain.ui.components.Background
 import com.acidsepp.rain.ui.components.PlayButton
-import com.acidsepp.rain.ui.theme.PauseIcon
 import com.acidsepp.rain.ui.theme.RainTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -70,11 +58,13 @@ class MainActivity : ComponentActivity() {
     private val volumePreferenceKey = floatPreferencesKey("volume")
     private val stopped = AtomicBoolean(true)
 
+    private var volume = 1.0f
+
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val volumePreference = runBlocking {
+        volume = runBlocking {
             dataStore.data.map { preferences -> preferences[volumePreferenceKey] ?: 1.0f }
                 .firstOrNull()
         } ?: 1.0f
@@ -84,7 +74,7 @@ class MainActivity : ComponentActivity() {
             RainTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
                     Background()
-                    var sliderValue by remember { mutableFloatStateOf(volumePreference) }
+                    var sliderValue by remember { mutableFloatStateOf(volume) }
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -103,6 +93,7 @@ class MainActivity : ComponentActivity() {
                         Slider(
                             value = sliderValue,
                             onValueChange = {
+                                volume = it
                                 sliderValue = it
                                 mediaPlayerA?.setVolume(it, it)
                                 mediaPlayerB?.setVolume(it, it)
@@ -138,6 +129,7 @@ class MainActivity : ComponentActivity() {
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
             )
+            setVolume(volume, volume)
         }
 
         mediaPlayerB = MediaPlayer.create(this, R.raw.rain).apply {
@@ -147,6 +139,7 @@ class MainActivity : ComponentActivity() {
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
             )
+            setVolume(volume, volume)
         }
 
         playerACoroutineScope?.cancel()
@@ -197,8 +190,6 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         stopLooping()
     }
-
-
 }
 
 /**
