@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -42,6 +41,7 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
+import com.acidsepp.rain.ui.theme.PauseIcon
 import com.acidsepp.rain.ui.theme.RainTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -61,8 +61,9 @@ class MainActivity : ComponentActivity() {
     private var playerBCoroutineScope: Job? = null
     private var playerACoroutineScope: Job? = null
 
-    private lateinit var mediaPlayerA: MediaPlayer
-    private lateinit var mediaPlayerB: MediaPlayer
+    private var mediaPlayerA: MediaPlayer? = null
+    private var mediaPlayerB: MediaPlayer? = null
+
     private val dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
     private val volumePreferenceKey = floatPreferencesKey("volume")
     private val stopped = AtomicBoolean(true)
@@ -72,7 +73,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val volumePreference = runBlocking {
-            dataStore.data.map { preferences -> preferences[volumePreferenceKey] ?: 1.0f }.firstOrNull()
+            dataStore.data.map { preferences -> preferences[volumePreferenceKey] ?: 1.0f }
+                .firstOrNull()
         } ?: 1.0f
 
         enableEdgeToEdge()
@@ -93,8 +95,8 @@ class MainActivity : ComponentActivity() {
                             value = sliderValue,
                             onValueChange = {
                                 sliderValue = it
-                                mediaPlayerA.setVolume(it, it)
-                                mediaPlayerB.setVolume(it, it)
+                                mediaPlayerA?.setVolume(it, it)
+                                mediaPlayerB?.setVolume(it, it)
                                 lifecycleScope.launch {
                                     dataStore.edit { settings ->
                                         settings[volumePreferenceKey] = it
@@ -110,41 +112,40 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        mediaPlayerA = MediaPlayer.create(this, R.raw.rain)
-        mediaPlayerA.apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-        }
-
-        mediaPlayerB = MediaPlayer.create(this, R.raw.rain)
-        mediaPlayerB.apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-        }
-
         startLooping(lifecycleScope)
     }
 
+    @Synchronized
     private fun startLooping(lifecycleScope: LifecycleCoroutineScope) {
         if (!stopped.get()) {
             return
         }
         stopped.set(false)
 
+        mediaPlayerA = MediaPlayer.create(this, R.raw.rain).apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+        }
+
+        mediaPlayerB = MediaPlayer.create(this, R.raw.rain).apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+        }
+
         playerACoroutineScope?.cancel()
         playerBCoroutineScope?.cancel()
 
         playerACoroutineScope = lifecycleScope.launch {
             while (!stopped.get()) {
-                mediaPlayerA.restart()
+                mediaPlayerA!!.restart()
                 Log.i("", "Media Player A started")
                 delay(loopLength.toMillis() * 2)
             }
@@ -153,35 +154,39 @@ class MainActivity : ComponentActivity() {
         playerBCoroutineScope = lifecycleScope.launch {
             while (!stopped.get()) {
                 delay(loopLength.toMillis())
-                mediaPlayerB.restart()
+                mediaPlayerB!!.restart()
                 Log.i("", "Media Player B started")
                 delay(loopLength.toMillis())
             }
         }
     }
 
+    @Synchronized
     private fun stopLooping() {
         if (stopped.get()) {
             return
         }
         stopped.set(true)
-        mediaPlayerA.pause()
-        mediaPlayerB.pause()
+        mediaPlayerA?.apply {
+            forceStop()
+            release()
+        }
+
+        mediaPlayerA?.apply {
+            forceStop()
+            release()
+        }
         playerACoroutineScope?.cancel()
         playerBCoroutineScope?.cancel()
+        mediaPlayerA = null
+        mediaPlayerB = null
+        playerACoroutineScope = null
+        playerBCoroutineScope = null
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaPlayerA.apply {
-            stop()
-            release()
-        }
-
-        mediaPlayerA.apply {
-            stop()
-            release()
-        }
+        stopLooping()
     }
 
     @Composable
@@ -205,7 +210,7 @@ class MainActivity : ComponentActivity() {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = if (isPlaying) Icons.Filled.Clear else Icons.Filled.PlayArrow,
+                imageVector = if (isPlaying) PauseIcon else Icons.Filled.PlayArrow,
                 contentDescription = if (isPlaying) "Stop" else "Play",
                 modifier = Modifier
                     .fillMaxSize()
@@ -236,9 +241,21 @@ fun Background() {
     }
 }
 
+/**
+ * Resets the MediaPlayer to 0ms and starts it.
+ */
 fun MediaPlayer.restart() = try {
     this.seekTo(0)
     this.start()
 } catch (e: Exception) {
-    Log.i("", "Could not stop media player", e)
+    Log.i("", "Could not restart MediaPlayer.", e)
+}
+
+/**
+ * Calls stop on the MediaPlayer, catches potential errors as the MediaPlayer could be in an
+ * unstoppable state, which is irrelevant as the MediaPlayer will be thrown away anyways.
+ */
+fun MediaPlayer.forceStop() = try {
+    this.stop()
+} catch (ignored: Exception) {
 }
