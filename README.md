@@ -1,4 +1,6 @@
 # Rain
+![Screenshot.png](Screenshot.png)
+
 This is a very simple app that loops [Calm Rain](https://commons.wikimedia.org/wiki/File:Calm_rain.wav).
 It has a start/stop button and a volume button, I consider this app feature complete.
 There are plenty of apps out there that do this, but are overloaded with features and complexity, so I wanted to have something very minimal.
