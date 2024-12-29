@@ -41,6 +41,8 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
+import com.acidsepp.rain.ui.components.Background
+import com.acidsepp.rain.ui.components.PlayButton
 import com.acidsepp.rain.ui.theme.PauseIcon
 import com.acidsepp.rain.ui.theme.RainTheme
 import kotlinx.coroutines.Job
@@ -90,7 +92,14 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        PlayButton(lifecycleScope)
+                        PlayButton(
+                            {
+                                startLooping(lifecycleScope)
+                            },
+                            {
+                                stopLooping()
+                            }
+                        )
                         Slider(
                             value = sliderValue,
                             onValueChange = {
@@ -189,56 +198,7 @@ class MainActivity : ComponentActivity() {
         stopLooping()
     }
 
-    @Composable
-    fun PlayButton(lifecycleScope: LifecycleCoroutineScope) {
-        var isPlaying by remember { mutableStateOf(true) }
 
-        // Main button logic
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .height(200.dp)
-                .clickable {
-                    if (isPlaying) {
-                        stopLooping()
-                        isPlaying = false
-                    } else {
-                        startLooping(lifecycleScope)
-                        isPlaying = true
-                    }
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = if (isPlaying) PauseIcon else Icons.Filled.PlayArrow,
-                contentDescription = if (isPlaying) "Stop" else "Play",
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(0.8f)
-            )
-        }
-    }
-}
-
-
-@Composable
-fun Background() {
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Image(
-            painter = painterResource(R.drawable.background),
-            contentDescription = null,
-            Modifier.fillMaxSize()
-        )
-        Image(
-            painter = painterResource(R.drawable.background),
-            contentDescription = "",
-            alignment = Alignment.Center,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-    }
 }
 
 /**
