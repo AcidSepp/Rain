@@ -8,7 +8,6 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,9 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.DefaultAlpha
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -83,12 +79,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             RainTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
-                    ImageWithBackground(
-                        painter = painterResource(id = R.drawable.background),
-                        backgroundDrawableResId = R.drawable.background,
-                        contentDescription = "",
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Background()
                     var sliderValue by remember { mutableFloatStateOf(volumePreference) }
                     Column(
                         modifier = Modifier
@@ -225,36 +216,22 @@ class MainActivity : ComponentActivity() {
 }
 
 
-
 @Composable
-fun ImageWithBackground(
-    painter: Painter,
-    @DrawableRes backgroundDrawableResId: Int,
-    contentDescription: String?,
-    modifier: Modifier = Modifier,
-    alignment: Alignment = Alignment.Center,
-    contentScale: ContentScale = ContentScale.Crop,
-    alpha: Float = DefaultAlpha,
-    colorFilter: ColorFilter? = null
-) {
+fun Background() {
     Box(
-        modifier = modifier
+        modifier = Modifier.fillMaxSize()
     ) {
         Image(
-            painter = painterResource(backgroundDrawableResId),
+            painter = painterResource(R.drawable.background),
             contentDescription = null,
-            modifier = Modifier
-                .matchParentSize()
+            Modifier.fillMaxSize()
         )
         Image(
-            painter = painter,
-            contentDescription = contentDescription,
-            alignment = alignment,
-            contentScale = contentScale,
-            alpha = alpha,
-            colorFilter = colorFilter,
-            modifier = Modifier
-                .matchParentSize()
+            painter = painterResource(R.drawable.background),
+            contentDescription = "",
+            alignment = Alignment.Center,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
     }
 }
