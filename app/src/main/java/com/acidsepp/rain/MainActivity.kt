@@ -1,8 +1,9 @@
 package com.acidsepp.rain
 
 import android.annotation.SuppressLint
-import android.media.AudioAttributes
-import android.media.MediaPlayer
+import android.content.ContentResolver
+import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -35,12 +37,12 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import net.protyposis.android.mediaplayer.MediaPlayer
+import net.protyposis.android.mediaplayer.UriSource
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var mediaPlayerA: MediaPlayer
-    private lateinit var mediaPlayerB: MediaPlayer
-
+    private var mediaPlayerA = MediaPlayer()
     private val dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
     private val volumePreferenceKey = floatPreferencesKey("volume")
 
@@ -69,13 +71,13 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         PlayButton(::startLooping, ::stopLooping)
+                        VerticalDivider(modifier = Modifier.fillMaxSize(0.3f).alpha(0f))
                         Slider(
                             value = sliderValue,
                             onValueChange = {
                                 volume = it
                                 sliderValue = it
                                 mediaPlayerA.setVolume(it, it)
-                                mediaPlayerB.setVolume(it, it)
                                 lifecycleScope.launch {
                                     dataStore.edit { settings ->
                                         settings[volumePreferenceKey] = it
@@ -91,26 +93,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        mediaPlayerA = MediaPlayer.create(this, R.raw.raina).apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-            setVolume(volume, volume)
-            isLooping = true
-        }
-        mediaPlayerB = MediaPlayer.create(this, R.raw.rainb).apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-            setVolume(volume, volume)
-            isLooping = true
-        }
+        mediaPlayerA.setDataSource(UriSource(this, this.resourceUri(R.raw.rain)))
+        mediaPlayerA.isLooping = true
+        mediaPlayerA.prepare()
 
         startLooping()
     }
@@ -118,13 +103,11 @@ class MainActivity : ComponentActivity() {
     @Synchronized
     private fun startLooping() {
         mediaPlayerA.start()
-        mediaPlayerB.start()
     }
 
     @Synchronized
     private fun stopLooping() {
         mediaPlayerA.pause()
-        mediaPlayerB.pause()
     }
 
     override fun onDestroy() {
@@ -139,4 +122,13 @@ class MainActivity : ComponentActivity() {
             release()
         }
     }
+}
+
+fun Context.resourceUri(resourceId: Int): Uri = with(resources) {
+    Uri.Builder()
+        .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+        .authority(getResourcePackageName(resourceId))
+        .appendPath(getResourceTypeName(resourceId))
+        .appendPath(getResourceEntryName(resourceId))
+        .build()
 }
