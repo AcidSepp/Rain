@@ -1,9 +1,7 @@
 package com.acidsepp.rain
 
 import android.annotation.SuppressLint
-import android.content.ContentResolver
-import android.content.Context
-import android.net.Uri
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -33,26 +31,28 @@ import androidx.lifecycle.lifecycleScope
 import com.acidsepp.rain.ui.components.Background
 import com.acidsepp.rain.ui.components.PlayButton
 import com.acidsepp.rain.ui.theme.RainTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.protyposis.android.mediaplayer.MediaPlayer
-import net.protyposis.android.mediaplayer.UriSource
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private var mediaPlayerA = MediaPlayer()
+    @Inject
+    lateinit var mediaPlayer: MediaPlayer
+
     private val dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
     private val volumePreferenceKey = floatPreferencesKey("volume")
 
-    private var volume = 1.0f
-
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "ServiceCast")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        volume = runBlocking {
+        val volume = runBlocking {
             dataStore.data.map { preferences -> preferences[volumePreferenceKey] ?: 1.0f }
                 .firstOrNull()
         } ?: 1.0f
@@ -70,14 +70,17 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        PlayButton(::startLooping, ::stopLooping)
-                        VerticalDivider(modifier = Modifier.fillMaxSize(0.3f).alpha(0f))
+                        PlayButton(mediaPlayer)
+                        VerticalDivider(
+                            modifier = Modifier
+                                .fillMaxSize(0.3f)
+                                .alpha(0f)
+                        )
                         Slider(
                             value = sliderValue,
                             onValueChange = {
-                                volume = it
                                 sliderValue = it
-                                mediaPlayerA.setVolume(it, it)
+                                mediaPlayer.setVolume(it, it)
                                 lifecycleScope.launch {
                                     dataStore.edit { settings ->
                                         settings[volumePreferenceKey] = it
@@ -93,42 +96,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        mediaPlayerA.setDataSource(UriSource(this, this.resourceUri(R.raw.rain)))
-        mediaPlayerA.isLooping = true
-        mediaPlayerA.prepare()
-
-        startLooping()
+        startService(Intent(this, RainService::class.java))
     }
-
-    @Synchronized
-    private fun startLooping() {
-        mediaPlayerA.start()
-    }
-
-    @Synchronized
-    private fun stopLooping() {
-        mediaPlayerA.pause()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mediaPlayerA.apply {
-            stop()
-            release()
-        }
-
-        mediaPlayerA.apply {
-            stop()
-            release()
-        }
-    }
-}
-
-fun Context.resourceUri(resourceId: Int): Uri = with(resources) {
-    Uri.Builder()
-        .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
-        .authority(getResourcePackageName(resourceId))
-        .appendPath(getResourceTypeName(resourceId))
-        .appendPath(getResourceEntryName(resourceId))
-        .build()
 }

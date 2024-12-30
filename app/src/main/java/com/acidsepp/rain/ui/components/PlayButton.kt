@@ -18,20 +18,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import com.acidsepp.rain.ui.theme.PauseIcon
+import net.protyposis.android.mediaplayer.MediaPlayer
 
 @Composable
-fun PlayButton(onPlay: () -> Unit, onPause: () -> Unit) {
+fun PlayButton(mediaPlayer: MediaPlayer) {
     var isPlaying by remember { mutableStateOf(true) }
     Box(
         modifier = Modifier
             .fillMaxWidth(0.8f)
             .height(200.dp)
             .clickable {
-                if (isPlaying) {
-                    onPause()
+                if (mediaPlayer.isPlaying) {
+                    mediaPlayer.pause()
                     isPlaying = false
                 } else {
-                    onPlay()
+                    mediaPlayer.start()
                     isPlaying = true
                 }
             },
