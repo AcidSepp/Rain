@@ -1,6 +1,7 @@
 package com.acidsepp.rain
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -39,23 +40,24 @@ import kotlinx.coroutines.runBlocking
 import net.protyposis.android.mediaplayer.MediaPlayer
 import javax.inject.Inject
 
+private val volumePreferenceKey = floatPreferencesKey("volume")
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var mediaPlayer: MediaPlayer
-
-    private val dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-    private val volumePreferenceKey = floatPreferencesKey("volume")
+    private lateinit var serviceIntent: Intent
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "ServiceCast")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         val volume = runBlocking {
             dataStore.data.map { preferences -> preferences[volumePreferenceKey] ?: 1.0f }
                 .firstOrNull()
         } ?: 1.0f
+        mediaPlayer.setVolume(volume)
 
         enableEdgeToEdge()
         setContent {
@@ -96,6 +98,12 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        startService(Intent(this, RainService::class.java))
+        serviceIntent = Intent(this, RainService::class.java)
+        startService(serviceIntent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopService(serviceIntent)
     }
 }
