@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -39,6 +40,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.protyposis.android.mediaplayer.MediaPlayer
 import javax.inject.Inject
+import kotlin.system.exitProcess
 
 private val volumePreferenceKey = floatPreferencesKey("volume")
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -103,7 +105,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         stopService(serviceIntent)
+        super.onDestroy()
+        finish()
+        exitProcess(0)
     }
 }

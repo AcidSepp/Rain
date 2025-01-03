@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import android.os.PowerManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import dagger.hilt.android.AndroidEntryPoint
 import net.protyposis.android.mediaplayer.MediaPlayer
@@ -57,11 +58,8 @@ class RainService : Service() {
             stop()
             release()
         }
-
-        mediaPlayer.apply {
-            stop()
-            release()
-        }
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        super.onDestroy()
     }
 }
 
