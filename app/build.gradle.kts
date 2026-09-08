@@ -57,7 +57,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.datastore.core.android)
 
-    implementation(libs.mediaplayer)
+    implementation(libs.androidx.media3.exoplayer)
 
     implementation(libs.hilt) // Use the latest version
     kapt(libs.hilt.compiler)

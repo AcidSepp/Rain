@@ -17,11 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
+import androidx.media3.exoplayer.ExoPlayer
 import com.acidsepp.rain.ui.theme.PauseIcon
-import net.protyposis.android.mediaplayer.MediaPlayer
 
 @Composable
-fun PlayButton(mediaPlayer: MediaPlayer) {
+fun PlayButton(mediaPlayer: ExoPlayer) {
     var isPlaying by remember { mutableStateOf(true) }
     Box(
         modifier = Modifier
@@ -32,7 +32,7 @@ fun PlayButton(mediaPlayer: MediaPlayer) {
                     mediaPlayer.pause()
                     isPlaying = false
                 } else {
-                    mediaPlayer.start()
+                    mediaPlayer.play()
                     isPlaying = true
                 }
             },

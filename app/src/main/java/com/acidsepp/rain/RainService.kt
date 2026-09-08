@@ -8,17 +8,16 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import android.os.PowerManager
-import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.media3.exoplayer.ExoPlayer
 import dagger.hilt.android.AndroidEntryPoint
-import net.protyposis.android.mediaplayer.MediaPlayer
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class RainService : Service() {
 
     @Inject
-    lateinit var mediaPlayer: MediaPlayer
+    lateinit var mediaPlayer: ExoPlayer
 
     override fun onBind(intent: Intent): IBinder? {
         return null
@@ -30,9 +29,8 @@ class RainService : Service() {
             buildForegroundNotification(),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
         )
-        mediaPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
+        mediaPlayer.setWakeMode(PowerManager.PARTIAL_WAKE_LOCK);
         mediaPlayer.prepare()
-        mediaPlayer.start()
         return super.onStartCommand(intent, flags, startId)
     }
 
