@@ -8,12 +8,11 @@ plugins {
 
 android {
     namespace = "com.acidsepp.rain"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.acidsepp.rain"
-        minSdk = 34
-        targetSdk = 34
+        minSdk = 35
         versionCode = 1
         versionName = "0.9"
 
@@ -30,11 +29,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
     }
     buildFeatures {
         compose = true
@@ -51,6 +47,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
+    implementation(libs.compose.material.icons)
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
