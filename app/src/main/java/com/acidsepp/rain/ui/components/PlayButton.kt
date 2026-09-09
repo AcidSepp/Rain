@@ -16,34 +16,39 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
 import com.acidsepp.rain.ui.theme.PauseIcon
+import com.acidsepp.rain.ui.theme.RainTheme
 
 @Composable
-fun PlayButton(mediaPlayer: ExoPlayer) {
+fun PlayButton(onPlay: () -> Unit, onPause: () -> Unit) {
     var isPlaying by remember { mutableStateOf(true) }
+    val onClick = {
+        if (isPlaying) {
+            isPlaying = false
+            onPause()
+        } else {
+            isPlaying = true
+            onPlay()
+        }
+    }
+    
     Box(
         modifier = Modifier
             .fillMaxWidth(0.8f)
             .height(200.dp)
-            .clickable {
-                if (mediaPlayer.isPlaying) {
-                    mediaPlayer.pause()
-                    isPlaying = false
-                } else {
-                    mediaPlayer.play()
-                    isPlaying = true
-                }
-            },
-        contentAlignment = Alignment.Center
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = if (isPlaying) PauseIcon else Icons.Filled.PlayArrow,
             contentDescription = if (isPlaying) "Stop" else "Play",
             modifier = Modifier
                 .fillMaxSize()
-                .alpha(0.8f)
+                .alpha(0.8f),
+            tint =  Color.White
         )
     }
 }
