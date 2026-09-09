@@ -11,7 +11,10 @@ class RainApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        serviceIntent = Intent(this, RainService::class.java)
+        serviceIntent = Intent(
+            this,
+            RainService::class.java
+        )
         startService(serviceIntent)
     }
 

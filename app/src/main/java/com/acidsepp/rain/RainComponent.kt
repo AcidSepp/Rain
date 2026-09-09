@@ -29,11 +29,9 @@ class RainComponent {
     }
 
     private fun Context.resourceUri(resourceId: Int): Uri = with(resources) {
-        Uri.Builder()
-            .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+        Uri.Builder().scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
             .authority(getResourcePackageName(resourceId))
             .appendPath(getResourceTypeName(resourceId))
-            .appendPath(getResourceEntryName(resourceId))
-            .build()
+            .appendPath(getResourceEntryName(resourceId)).build()
     }
 }

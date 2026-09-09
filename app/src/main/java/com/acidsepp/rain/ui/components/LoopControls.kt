@@ -15,13 +15,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
+@Preview
 @Composable
 fun LoopControls(
-    initialVolume: Float,
-    onVolumeChange: (volume: Float) -> Unit,
-    onPlay: () -> Unit, onPause: () -> Unit,
+    initialVolume: Float = 0.5f,
+    onVolumeChange: (volume: Float) -> Unit = {},
+    onPlay: () -> Unit = {},
+    onPause: () -> Unit = {},
 ) {
     var sliderValue by remember { mutableFloatStateOf(initialVolume) }
     Column(
@@ -31,17 +34,22 @@ fun LoopControls(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        PlayButton(onPlay, onPause)
+        PlayButton(
+            onPlay,
+            onPause
+        )
         VerticalDivider(
             modifier = Modifier
                 .fillMaxSize(0.3f)
                 .alpha(0f)
         )
         Slider(
-            value = sliderValue, onValueChange = {
+            value = sliderValue,
+            onValueChange = {
                 sliderValue = it
                 onVolumeChange(it)
-            }, modifier = Modifier
+            },
+            modifier = Modifier
                 .fillMaxWidth(0.8f)
                 .alpha(0.8f)
         )

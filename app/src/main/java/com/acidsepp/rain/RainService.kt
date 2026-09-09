@@ -23,7 +23,11 @@ class RainService : Service() {
         return null
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         startForeground(
             1337,
             buildForegroundNotification(),
@@ -31,7 +35,11 @@ class RainService : Service() {
         )
         mediaPlayer.setWakeMode(PowerManager.PARTIAL_WAKE_LOCK);
         mediaPlayer.prepare()
-        return super.onStartCommand(intent, flags, startId)
+        return super.onStartCommand(
+            intent,
+            flags,
+            startId
+        )
     }
 
     private fun buildForegroundNotification(): Notification {
@@ -41,13 +49,15 @@ class RainService : Service() {
             NotificationManager.IMPORTANCE_LOW
         )
 
-        val notificationManager = getSystemService(NotificationManager::class.java)
+        val notificationManager =
+            getSystemService(NotificationManager::class.java)
         notificationManager.createNotificationChannel(channel)
 
-        return NotificationCompat.Builder(this, channel.id)
-            .setOngoing(true)
-            .setContentTitle("Rain")
-            .setContentText("Rain").build()
+        return NotificationCompat.Builder(
+            this,
+            channel.id
+        ).setOngoing(true).setContentTitle("Rain").setContentText("Rain")
+            .build()
     }
 
     override fun onDestroy() {

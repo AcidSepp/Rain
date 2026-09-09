@@ -17,13 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.media3.exoplayer.ExoPlayer
 import com.acidsepp.rain.ui.theme.PauseIcon
-import com.acidsepp.rain.ui.theme.RainTheme
 
+@Preview
 @Composable
-fun PlayButton(onPlay: () -> Unit, onPause: () -> Unit) {
+fun PlayButton(
+    onPlay: () -> Unit = {},
+    onPause: () -> Unit = {},
+) {
     var isPlaying by remember { mutableStateOf(true) }
     val onClick = {
         if (isPlaying) {
@@ -34,7 +37,7 @@ fun PlayButton(onPlay: () -> Unit, onPause: () -> Unit) {
             onPlay()
         }
     }
-    
+
     Box(
         modifier = Modifier
             .fillMaxWidth(0.8f)
@@ -45,10 +48,10 @@ fun PlayButton(onPlay: () -> Unit, onPause: () -> Unit) {
         Icon(
             imageVector = if (isPlaying) PauseIcon else Icons.Filled.PlayArrow,
             contentDescription = if (isPlaying) "Stop" else "Play",
+            tint = Color.White,
             modifier = Modifier
                 .fillMaxSize()
-                .alpha(0.8f),
-            tint =  Color.White
+                .alpha(0.8f)
         )
     }
 }

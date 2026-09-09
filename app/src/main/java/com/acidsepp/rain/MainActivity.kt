@@ -36,7 +36,10 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var mediaPlayer: ExoPlayer
 
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "ServiceCast")
+    @SuppressLint(
+        "UnusedMaterial3ScaffoldPaddingParameter",
+        "ServiceCast"
+    )
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val initialVolume = runBlocking {
@@ -51,14 +54,19 @@ class MainActivity : ComponentActivity() {
         setContent {
             RainTheme {
                 Background()
-                LoopControls(initialVolume, {
-                    mediaPlayer.volume = it
-                    lifecycleScope.launch {
-                        dataStore.edit { settings ->
-                            settings[volumePreferenceKey] = it
+                LoopControls(
+                    initialVolume,
+                    {
+                        mediaPlayer.volume = it
+                        lifecycleScope.launch {
+                            dataStore.edit { settings ->
+                                settings[volumePreferenceKey] = it
+                            }
                         }
-                    }
-                }, mediaPlayer::play, mediaPlayer::pause)
+                    },
+                    mediaPlayer::play,
+                    mediaPlayer::pause
+                )
             }
         }
     }
@@ -66,14 +74,5 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         mediaPlayer.pause()
-    }
-}
-
-@Composable
-@Preview
-fun Preview() {
-    RainTheme {
-        Background()
-        LoopControls(0.5f, {}, {}, {})
     }
 }
