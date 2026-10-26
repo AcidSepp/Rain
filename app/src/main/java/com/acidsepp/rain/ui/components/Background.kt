@@ -17,11 +17,6 @@ fun Background() {
     ) {
         Image(
             painter = painterResource(R.drawable.background),
-            contentDescription = null,
-            Modifier.fillMaxSize()
-        )
-        Image(
-            painter = painterResource(R.drawable.background),
             contentDescription = "",
             alignment = Alignment.Center,
             contentScale = ContentScale.Crop,
